@@ -1,0 +1,5 @@
+.course-details-input {
+    width: 50%; /* Adjust the percentage as needed */
+    box-sizing: border-box; /* Ensure padding and border are included in the width */
+    margin-bottom: 10px; /* Add space between fields */
+}

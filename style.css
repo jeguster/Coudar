@@ -1,0 +1,39 @@
+.course-calendar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px; /* Adjust the gap between items as needed */
+}
+
+.course-item {
+    flex: 1 1 calc(33.333% - 16px); /* Adjust the width and gap as needed */
+    box-sizing: border-box;
+    padding: 16px;
+    border: 1px solid #ddd;
+    background-color: #f9f9f9;
+    text-align: center;
+}
+
+.course-item h2 {
+    font-size: 1.25em;
+    margin-bottom: 8px;
+}
+
+.course-item img {
+    max-width: 100%;
+    height: auto;
+    margin-bottom: 8px;
+}
+
+.course-item p {
+    margin: 4px 0;
+}
+
+.course-item a {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+.course-item a:hover {
+    background-color: #e0e0e0;
+}
