@@ -1,39 +1,25 @@
-.course-calendar {
+.coudar-courses {
     display: flex;
     flex-wrap: wrap;
-    gap: 16px; /* Adjust the gap between items as needed */
+    gap: 20px;
 }
 
-.course-item {
-    flex: 1 1 calc(33.333% - 16px); /* Adjust the width and gap as needed */
-    box-sizing: border-box;
-    padding: 16px;
+.coudar-course {
     border: 1px solid #ddd;
-    background-color: #f9f9f9;
-    text-align: center;
+    padding: 15px;
+    width: 30%;
+    box-sizing: border-box;
 }
 
-.course-item h2 {
-    font-size: 1.25em;
-    margin-bottom: 8px;
+.coudar-course h2 {
+    font-size: 1.5em;
+    margin-bottom: 10px;
 }
 
-.course-item img {
-    max-width: 100%;
-    height: auto;
-    margin-bottom: 8px;
+.coudar-course p {
+    margin: 5px 0;
 }
 
-.course-item p {
-    margin: 4px 0;
-}
-
-.course-item a {
-    text-decoration: none;
-    color: inherit;
-    display: block;
-}
-
-.course-item a:hover {
-    background-color: #e0e0e0;
+.coudar-course-thumbnail {
+    margin-bottom: 10px;
 }

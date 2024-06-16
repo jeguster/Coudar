@@ -1,330 +1,322 @@
 <?php
-
 /*
-Plugin Name: Coudar - Course Calendar
-Plugin URI: http://your-plugin-url.com/
-Description: Easy management for course schedules with Coudar.
+Plugin Name: Coudar
+Description: A simple course registration plugin.
 Version: 1.0.0
-Author: Pate
-Author URI: http://your-author-url.com/
-Text Domain: coudar
-Domain Path: /lang
+Author: Your Name
 */
 
-define( 'COUDAR_FILE', __FILE__ );
-define( 'COUDAR_PREFIX', '_coudar' );
-define( 'COUDAR_PATH', untrailingslashit( plugin_dir_path( COUDAR_FILE ) ) );
-define( 'COUDAR_WOO', in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ? true : false );
-define( 'COUDAR_GMT_OFFSET', current_time('timestamp') - time() );
-define( 'COUDAR_VERSION', '1.0.0' );
-
-global $coudar_courses;
-$coudar_courses = [];
-
-register_activation_hook( __FILE__, 'coudar_plugin_activation' );
-register_deactivation_hook( __FILE__, 'coudar_plugin_deactivation' );
-
-add_action( 'plugins_loaded', 'coudar_load_domain' );
-
-function coudar_load_domain() {
-  load_plugin_textdomain( 'coudar', false, basename( dirname( __FILE__ ) ) . '/lang/' );
-}
-
-function coudar_plugin_activation() {
-    // Activation code here...
-}
-
-function coudar_plugin_deactivation() {
-    // Deactivation code here...
-}
-
-// Register a custom post type for Courses.
-function coudar_register_course_post_type() {
+// Register Custom Post Type
+function coudar_register_post_type() {
     $labels = array(
-        'name' => __('Courses'),
-        'singular_name' => __('Course'),
-        'add_new' => __('Add New Course'),
-        'add_new_item' => __('Add New Course'),
-        'edit_item' => __('Edit Course'),
-        'new_item' => __('New Course'),
-        'view_item' => __('View Course'),
-        'search_items' => __('Search Courses'),
-        'not_found' => __('No courses found'),
-        'not_found_in_trash' => __('No courses found in Trash'),
-        'all_items' => __('All Courses'),
-        'menu_name' => __('Courses'),
-        'name_admin_bar' => __('Course'),
+        'name' => __('Coudar', 'coudar'),
+        'singular_name' => __('Course', 'coudar'),
+        'add_new' => __('Add New Course', 'coudar'),
+        'add_new_item' => __('Add New Course', 'coudar'),
+        'edit_item' => __('Edit Course', 'coudar'),
+        'new_item' => __('New Course', 'coudar'),
+        'view_item' => __('View Course', 'coudar'),
+        'search_items' => __('Search Courses', 'coudar'),
+        'not_found' => __('No courses found', 'coudar'),
+        'not_found_in_trash' => __('No courses found in Trash', 'coudar'),
+        'all_items' => __('All Courses', 'coudar'),
+        'menu_name' => __('Coudar', 'coudar'),
+        'name_admin_bar' => __('Course', 'coudar'),
     );
 
     $args = array(
         'labels' => $labels,
         'public' => true,
-        'has_archive' => true,
+        'publicly_queryable' => true,
+        'show_ui' => true,
+        'show_in_menu' => true,
+        'query_var' => true,
         'rewrite' => array('slug' => 'course'),
-        'supports' => array('title', 'editor', 'thumbnail', 'custom-fields', 'excerpt', 'elementor'), // Add 'elementor'
+        'capability_type' => 'post',
+        'has_archive' => true,
+        'hierarchical' => false,
+        'menu_position' => null,
+        'supports' => array('title', 'editor', 'thumbnail'),
         'show_in_rest' => true,
-        'menu_icon' => 'dashicons-calendar-alt',
+        'menu_icon' => 'dashicons-calendar-alt', // Add calendar icon
     );
 
     register_post_type('course', $args);
 }
+add_action('init', 'coudar_register_post_type');
 
-add_action('init', 'coudar_register_course_post_type');
-
-// Remove default meta boxes for Courses
-function coudar_remove_default_meta_boxes() {
-    remove_meta_box('formatdiv', 'course', 'normal'); // Post format
-    remove_meta_box('postexcerpt', 'course', 'normal'); // Excerpt
-    remove_meta_box('authordiv', 'course', 'normal'); // Author
-    remove_meta_box('revisionsdiv', 'course', 'normal'); // Revisions
-    remove_meta_box('postcustom', 'course', 'normal'); // Custom fields
-    remove_meta_box('slugdiv', 'course', 'normal'); // Slug
-    remove_meta_box('submitdiv', 'course', 'side'); // Publish
-    remove_meta_box('trackbacksdiv', 'course', 'normal'); // Trackbacks
-    remove_meta_box('commentsdiv', 'course', 'normal'); // Comments
-    remove_meta_box('commentstatusdiv', 'course', 'normal'); // Comment status
+// Register settings
+function coudar_register_settings() {
+    register_setting('coudar_settings_group', 'coudar_admin_email_subject');
+    register_setting('coudar_settings_group', 'coudar_admin_email_body');
+    register_setting('coudar_settings_group', 'coudar_user_email_subject');
+    register_setting('coudar_settings_group', 'coudar_user_email_body');
 }
-
-add_action('do_meta_boxes', 'coudar_remove_default_meta_boxes');
-
-// Add meta boxes for course details
-function coudar_add_meta_boxes() {
-    add_meta_box(
-        'coudar_course_details',
-        __('Course Details'),
-        'coudar_render_meta_box',
-        'course',
-        'normal',
-        'default'
-    );
-}
-
-add_action('add_meta_boxes', 'coudar_add_meta_boxes');
-
-function coudar_render_meta_box($post) {
-    // Add nonce for security and authentication.
-    wp_nonce_field('coudar_nonce_action', 'coudar_nonce');
-
-    $course_date = get_post_meta($post->ID, 'course_date', true);
-    $course_time = get_post_meta($post->ID, 'course_time', true);
-    $course_price = get_post_meta($post->ID, 'course_price', true);
-    $course_message = get_post_meta($post->ID, 'course_message', true);
-
-    echo '<p><label for="course_date">' . __('Course Date', 'coudar') . '</label><br>';
-    echo '<input type="date" id="course_date" name="course_date" value="' . esc_attr($course_date) . '" class="course-details-input"></p>';
-
-    echo '<p><label for="course_time">' . __('Course Time', 'coudar') . '</label><br>';
-    echo '<input type="time" id="course_time" name="course_time" value="' . esc_attr($course_time) . '" class="course-details-input"></p>';
-
-    echo '<p><label for="course_price">' . __('Course Price', 'coudar') . '</label><br>';
-    echo '<input type="text" id="course_price" name="course_price" value="' . esc_attr($course_price) . '" class="course-details-input"></p>';
-
-    echo '<p><label for="course_message">' . __('Email Message', 'coudar') . '</label><br>';
-    echo '<textarea id="course_message" name="course_message" class="course-details-input" style="height: 100px;">' . esc_textarea($course_message) . '</textarea></p>';
-}
-
-// Save meta box content.
-function coudar_save_meta_box($post_id) {
-    // Verify nonce.
-    if (!isset($_POST['coudar_nonce']) || !wp_verify_nonce($_POST['coudar_nonce'], 'coudar_nonce_action')) {
-        return;
-    }
-
-    // Check autosave.
-    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
-        return;
-    }
-
-    // Check permissions.
-    if (isset($_POST['post_type']) && 'page' === $_POST['post_type']) {
-        if (!current_user_can('edit_page', $post_id)) {
-            return;
-        }
-    } elseif (!current_user_can('edit_post', $post_id)) {
-        return;
-    }
-
-    // Sanitize user input.
-    $course_date = sanitize_text_field($_POST['course_date']);
-    $course_time = sanitize_text_field($_POST['course_time']);
-    $course_price = sanitize_text_field($_POST['course_price']);
-    $course_message = sanitize_textarea_field($_POST['course_message']);
-
-    // Update the meta field in the database.
-    update_post_meta($post_id, 'course_date', $course_date);
-    update_post_meta($post_id, 'course_time', $course_time);
-    update_post_meta($post_id, 'course_price', $course_price);
-    update_post_meta($post_id, 'course_message', $course_message);
-}
-
-add_action('save_post', 'coudar_save_meta_box');
-
-// Enqueue Dashicons and Custom Styles
-function coudar_enqueue_assets() {
-    wp_enqueue_style('dashicons');
-    wp_enqueue_style('coudar-styles', plugins_url('style.css', __FILE__));
-}
-
-add_action('wp_enqueue_scripts', 'coudar_enqueue_assets');
-
-// Enqueue custom admin styles
-function coudar_enqueue_admin_styles() {
-    wp_enqueue_style('coudar-admin-styles', plugins_url('admin-style.css', __FILE__));
-}
-
-add_action('admin_enqueue_scripts', 'coudar_enqueue_admin_styles');
-
-// Load the custom template for single course posts
-function coudar_load_single_course_template($template) {
-    global $post;
-
-    if ($post->post_type == 'course') {
-        // Look in plugin folder first
-        $plugin_template = plugin_dir_path(__FILE__) . 'templates/single-course.php';
-        if (file_exists($plugin_template)) {
-            return $plugin_template;
-        }
-    }
-
-    return $template;
-}
-
-add_filter('single_template', 'coudar_load_single_course_template');
-
-// Shortcode to display the course calendar
-function coudar_course_calendar_shortcode() {
-    $args = array(
-        'post_type' => 'course',
-        'posts_per_page' => -1,
-        'order' => 'ASC',
-        'orderby' => 'meta_value',
-        'meta_key' => 'course_date'
-    );
-
-    $query = new WP_Query($args);
-    if ($query->have_posts()) {
-        $output = '<div class="course-calendar">';
-        while ($query->have_posts()) {
-            $query->the_post();
-            $course_date = get_post_meta(get_the_ID(), 'course_date', true);
-            $course_time = get_post_meta(get_the_ID(), 'course_time', true);
-            $course_price = get_post_meta(get_the_ID(), 'course_price', true);
-            $output .= '<div class="course-item">';
-            $output .= '<a href="' . get_permalink() . '">';
-            $output .= '<h2>' . get_the_title() . '</h2>';
-            $output .= '<div>' . get_the_post_thumbnail(get_the_ID(), 'thumbnail') . '</div>';
-            $output .= '<p>' . $course_date . ' at ' . $course_time . '</p>';
-            $output .= '<p>Price: ' . $course_price . '</p>';
-            $output .= '</a>';
-            $output .= '</div>';
-        }
-        $output .= '</div>';
-        wp_reset_postdata();
-    } else {
-        $output = '<p>No courses found</p>';
-    }
-
-    return $output;
-}
-
-add_shortcode('coudar_course_calendar', 'coudar_course_calendar_shortcode');
-
-// Register activation and deactivation hooks
-register_activation_hook(__FILE__, 'coudar_flush_rewrite_rules');
-register_deactivation_hook(__FILE__, 'coudar_flush_rewrite_rules');
-
-function coudar_flush_rewrite_rules() {
-    coudar_register_course_post_type();
-    flush_rewrite_rules();
-}
+add_action('admin_init', 'coudar_register_settings');
 
 // Add settings page
-function coudar_add_settings_page() {
-    add_submenu_page(
-        'edit.php?post_type=course', // Parent slug
-        __('Coudar Settings', 'coudar'), // Page title
-        __('Settings', 'coudar'), // Menu title
-        'manage_options', // Capability
-        'coudar-settings', // Menu slug
-        'coudar_render_settings_page' // Callback function
+function coudar_settings_page() {
+    add_menu_page(
+        'Coudar Settings',
+        'Coudar Settings',
+        'manage_options',
+        'coudar-settings',
+        'coudar_settings_page_html'
     );
 }
+add_action('admin_menu', 'coudar_settings_page');
 
-add_action('admin_menu', 'coudar_add_settings_page');
-
-function coudar_render_settings_page() {
+// Settings page HTML
+function coudar_settings_page_html() {
     ?>
     <div class="wrap">
-        <h1><?php _e('Coudar Settings', 'coudar'); ?></h1>
+        <h1>Coudar Settings</h1>
         <form method="post" action="options.php">
-            <?php
-            settings_fields('coudar_settings_group');
-            do_settings_sections('coudar-settings');
-            submit_button();
-            ?>
+            <?php settings_fields('coudar_settings_group'); ?>
+            <?php do_settings_sections('coudar_settings_group'); ?>
+            <table class="form-table">
+                <tr valign="top">
+                    <th scope="row">Admin Email Subject</th>
+                    <td><input type="text" name="coudar_admin_email_subject" value="<?php echo esc_attr(get_option('coudar_admin_email_subject', 'New Course Registration')); ?>" /></td>
+                </tr>
+                <tr valign="top">
+                    <th scope="row">Admin Email Body</th>
+                    <td><textarea name="coudar_admin_email_body" rows="10" cols="50"><?php echo esc_textarea(get_option('coudar_admin_email_body', 'You have received a new course registration.')); ?></textarea></td>
+                </tr>
+                <tr valign="top">
+                    <th scope="row">User Email Subject</th>
+                    <td><input type="text" name="coudar_user_email_subject" value="<?php echo esc_attr(get_option('coudar_user_email_subject', 'Course Registration Confirmation')); ?>" /></td>
+                </tr>
+                <tr valign="top">
+                    <th scope="row">User Email Body</th>
+                    <td><textarea name="coudar_user_email_body" rows="10" cols="50"><?php echo esc_textarea(get_option('coudar_user_email_body', 'Thank you for your registration!')); ?></textarea></td>
+                </tr>
+            </table>
+            <?php submit_button(); ?>
         </form>
     </div>
     <?php
 }
 
-// Register settings
-function coudar_register_settings() {
-    register_setting('coudar_settings_group', 'coudar_date_format');
-    register_setting('coudar_settings_group', 'coudar_time_format');
-    register_setting('coudar_settings_group', 'coudar_currency_format');
+// Enqueue custom scripts
+function coudar_enqueue_scripts() {
+    wp_enqueue_script('coudar-scripts', plugins_url('scripts.js', __FILE__), array('jquery'), null, true);
+    wp_localize_script('coudar-scripts', 'coudar_ajax', array(
+        'ajax_url' => admin_url('admin-ajax.php'),
+        'nonce' => wp_create_nonce('coudar_register_course')
+    ));
+}
+add_action('wp_enqueue_scripts', 'coudar_enqueue_scripts');
 
-    add_settings_section(
-        'coudar_settings_section',
-        __('Course Settings', 'coudar'),
-        'coudar_settings_section_callback', // Non-null callback function
-        'coudar-settings'
-    );
+// Enqueue frontend styles
+function coudar_enqueue_styles() {
+    wp_enqueue_style('coudar-styles', plugins_url('styles.css', __FILE__));
+}
+add_action('wp_enqueue_scripts', 'coudar_enqueue_styles');
 
-    add_settings_field(
-        'coudar_date_format',
-        __('Date Format', 'coudar'),
-        'coudar_date_format_callback',
-        'coudar-settings',
-        'coudar_settings_section'
-    );
-
-    add_settings_field(
-        'coudar_time_format',
-        __('Time Format', 'coudar'),
-        'coudar_time_format_callback',
-        'coudar-settings',
-        'coudar_settings_section'
-    );
-
-    add_settings_field(
-        'coudar_currency_format',
-        __('Currency Format', 'coudar'),
-        'coudar_currency_format_callback',
-        'coudar-settings',
-        'coudar_settings_section'
+// Add Metaboxes
+function coudar_add_meta_boxes() {
+    add_meta_box(
+        'coudar_course_details',
+        'Course Details',
+        'coudar_render_meta_box',
+        'course',
+        'normal',
+        'high'
     );
 }
+add_action('add_meta_boxes', 'coudar_add_meta_boxes');
 
-add_action('admin_init', 'coudar_register_settings');
-
-function coudar_settings_section_callback() {
-    // This callback function is intentionally left blank.
+function coudar_render_meta_box($post) {
+    // Retrieve current data based on post ID
+    $course_date = get_post_meta($post->ID, 'course_date', true);
+    $course_time = get_post_meta($post->ID, 'course_time', true);
+    $course_price = get_post_meta($post->ID, 'course_price', true);
+    
+    // Add a nonce field so we can check for it later.
+    wp_nonce_field('coudar_save_meta_box_data', 'coudar_meta_box_nonce');
+    ?>
+    <label for="course_date">Course Date:</label>
+    <input type="date" id="course_date" name="course_date" value="<?php echo esc_attr($course_date); ?>" />
+    <br />
+    <label for="course_time">Course Time:</label>
+    <input type="time" id="course_time" name="course_time" value="<?php echo esc_attr($course_time); ?>" />
+    <br />
+    <label for="course_price">Course Price:</label>
+    <input type="text" id="course_price" name="course_price" value="<?php echo esc_attr($course_price); ?>" />
+    <?php
 }
 
-function coudar_date_format_callback() {
-    $date_format = get_option('coudar_date_format', 'd/m/Y');
-    echo '<input type="text" name="coudar_date_format" value="' . esc_attr($date_format) . '" class="regular-text">';
-    echo '<p class="description">' . __('Enter the date format. Default: d/m/Y', 'coudar') . '</p>';
+function coudar_save_meta_box_data($post_id) {
+    // Check if our nonce is set.
+    if (!isset($_POST['coudar_meta_box_nonce'])) {
+        return;
+    }
+    // Verify that the nonce is valid.
+    if (!wp_verify_nonce($_POST['coudar_meta_box_nonce'], 'coudar_save_meta_box_data')) {
+        return;
+    }
+    // If this is an autosave, our form has not been submitted, so we don't want to do anything.
+    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
+        return;
+    }
+    // Check the user's permissions.
+    if (isset($_POST['post_type']) && 'page' == $_POST['post_type']) {
+        if (!current_user_can('edit_page', $post_id)) {
+            return;
+        }
+    } else {
+        if (!current_user_can('edit_post', $post_id)) {
+            return;
+        }
+    }
+    // Sanitize user input.
+    $course_date = sanitize_text_field($_POST['course_date']);
+    $course_time = sanitize_text_field($_POST['course_time']);
+    $course_price = sanitize_text_field($_POST['course_price']);
+    // Update the meta field in the database.
+    update_post_meta($post_id, 'course_date', $course_date);
+    update_post_meta($post_id, 'course_time', $course_time);
+    update_post_meta($post_id, 'course_price', $course_price);
+}
+add_action('save_post', 'coudar_save_meta_box_data');
+
+// Handle AJAX form submission
+function coudar_register_course() {
+    // Ensure that WordPress core functions are available
+    if (!function_exists('wp_mail')) {
+        require_once ABSPATH . WPINC . '/pluggable.php';
+    }
+
+    parse_str($_POST['data'], $form_data);
+
+    // Log form data for debugging
+    error_log(print_r($form_data, true));
+
+    // Check nonce for security
+    if (!isset($form_data['coudar_nonce']) || !wp_verify_nonce($form_data['coudar_nonce'], 'coudar_register_course')) {
+        wp_send_json_error('Invalid nonce');
+        return;
+    }
+
+    // Prepare email details
+    $admin_email = get_option('admin_email');
+    $subject = 'New Course Registration';
+    $message = 'Name: ' . sanitize_text_field($form_data['participant_name']) . "\n";
+    $message .= 'Email: ' . sanitize_email($form_data['participant_email']) . "\n";
+    $message .= 'Phone: ' . sanitize_text_field($form_data['participant_phone']) . "\n";
+    $message .= 'Number of Participants: ' . intval($form_data['participant_count']) . "\n";
+    $message .= 'Message: ' . sanitize_textarea_field($form_data['participant_message']);
+
+    // Send email to admin
+    if (!wp_mail($admin_email, $subject, $message)) {
+        error_log('Admin email failed to send.');
+    }
+
+    // Prepare confirmation email for user
+    $user_email = sanitize_email($form_data['participant_email']);
+    $user_subject = 'Course Registration Confirmation';
+    $user_message = 'Thank you for your submission! Here are the details of your registration:' . "\n\n";
+    $user_message .= 'Name: ' . sanitize_text_field($form_data['participant_name']) . "\n";
+    $user_message .= 'Email: ' . sanitize_email($form_data['participant_email']) . "\n";
+    $user_message .= 'Phone: ' . sanitize_text_field($form_data['participant_phone']) . "\n";
+    $user_message .= 'Number of Participants: ' . intval($form_data['participant_count']) . "\n";
+    $user_message .= 'Message: ' . sanitize_textarea_field($form_data['participant_message']) . "\n\n";
+    $user_message .= 'We look forward to seeing you at the course!';
+
+    // Send confirmation email to user
+    if (!wp_mail($user_email, $user_subject, $user_message)) {
+        error_log('User confirmation email failed to send.');
+    }
+
+    // Return success response
+    wp_send_json_success();
 }
 
-function coudar_time_format_callback() {
-    $time_format = get_option('coudar_time_format', 'H:i');
-    echo '<input type="text" name="coudar_time_format" value="' . esc_attr($time_format) . '" class="regular-text">';
-    echo '<p class="description">' . __('Enter the time format. Default: H:i', 'coudar') . '</p>';
-}
+// Register AJAX handlers
+add_action('wp_ajax_coudar_register_course', 'coudar_register_course');
+add_action('wp_ajax_nopriv_coudar_register_course', 'coudar_register_course');
 
-function coudar_currency_format_callback() {
-    $currency_format = get_option('coudar_currency_format', '$');
-    echo '<input type="text" name="coudar_currency_format" value="' . esc_attr($currency_format) . '" class="regular-text">';
-    echo '<p class="description">' . __('Enter the currency format. Default: $', 'coudar') . '</p>';
+// Shortcode to display courses
+function coudar_courses_shortcode($atts) {
+    ob_start();
+
+    $query = new WP_Query(array(
+        'post_type' => 'course',
+        'posts_per_page' => -1,
+        'orderby' => 'date',
+        'order' => 'ASC'
+    ));
+
+    if ($query->have_posts()) {
+        echo '<div class="coudar-courses">';
+        while ($query->have_posts()) {
+            $query->the_post();
+            $course_date = get_post_meta(get_the_ID(), 'course_date', true);
+            $course_time = get_post_meta(get_the_ID(), 'course_time', true);
+            $course_price = get_post_meta(get_the_ID(), 'course_price', true);
+            ?>
+            <div class="coudar-course">
+                <h2><?php the_title(); ?></h2>
+                <p>Date: <?php echo esc_html($course_date); ?></p>
+                <p>Time: <?php echo esc_html($course_time); ?></p>
+                <p>Price: <?php echo esc_html($course_price); ?></p>
+                <?php if (has_post_thumbnail()): ?>
+                    <div class="coudar-course-thumbnail">
+                        <?php the_post_thumbnail('thumbnail'); ?>
+                    </div>
+                <?php endif; ?>
+                <a href="<?php the_permalink(); ?>">View Details</a>
+            </div>
+            <?php
+        }
+        echo '</div>';
+    } else {
+        echo '<p>No courses found.</p>';
+    }
+
+    wp_reset_postdata();
+
+    return ob_get_clean();
 }
+add_shortcode('coudar_courses', 'coudar_courses_shortcode');
+
+// Display course details on single course page
+function coudar_display_course_details($content) {
+    if (is_singular('course')) {
+        global $post;
+        $course_date = get_post_meta($post->ID, 'course_date', true);
+        $course_time = get_post_meta($post->ID, 'course_time', true);
+        $course_price = get_post_meta($post->ID, 'course_price', true);
+        $course_content = '';
+
+        $course_content .= '<h1>' . get_the_title() . '</h1>';
+        $course_content .= '<p>' . get_the_content() . '</p>';
+        if (has_post_thumbnail()) {
+            $course_content .= '<div class="coudar-course-thumbnail">' . get_the_post_thumbnail($post->ID, 'large') . '</div>';
+        }
+        $course_content .= '<p><strong>Date:</strong> ' . esc_html($course_date) . '</p>';
+        $course_content .= '<p><strong>Time:</strong> ' . esc_html($course_time) . '</p>';
+        $course_content .= '<p><strong>Price:</strong> ' . esc_html($course_price) . '</p>';
+
+        // Add registration form
+        $course_content .= '<h2>Register for this Course</h2>';
+        $course_content .= '<form id="coudar-registration-form">';
+        $course_content .= '<label for="participant_name">Name:</label>';
+        $course_content .= '<input type="text" id="participant_name" name="participant_name" required><br>';
+        $course_content .= '<label for="participant_email">Email:</label>';
+        $course_content .= '<input type="email" id="participant_email" name="participant_email" required><br>';
+        $course_content .= '<label for="participant_phone">Phone (optional):</label>';
+        $course_content .= '<input type="text" id="participant_phone" name="participant_phone"><br>';
+        $course_content .= '<label for="participant_count">Number of Participants:</label>';
+        $course_content .= '<input type="number" id="participant_count" name="participant_count" required><br>';
+        $course_content .= '<label for="participant_message">Message:</label>';
+        $course_content .= '<textarea id="participant_message" name="participant_message"></textarea><br>';
+        $course_content .= '<button type="submit">Submit</button>';
+        $course_content .= '</form>';
+
+        return $course_content;
+    }
+    return $content;
+}
+add_filter('the_content', 'coudar_display_course_details');
