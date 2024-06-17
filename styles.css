@@ -1,23 +1,32 @@
-.single-course-content {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 20px;
+.course-thumbnails {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: space-between;
+}
+
+.course-thumbnail {
+    width: calc(33.333% - 20px);
+    box-sizing: border-box;
+    border: 1px solid #ddd;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+    text-align: center;
 }
 
 .course-thumbnail img {
-    display: block;
-    margin: 0 auto;
     max-width: 100%;
     height: auto;
-    border-radius: 8px;
+    border-radius: 5px;
 }
 
-#course-registration-form {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 20px;
+.course-thumbnail h3 {
+    font-size: 1.2em;
+    margin: 10px 0;
 }
 
-.entry-title, .entry-content {
-    text-align: center;
+.course-thumbnail p {
+    font-size: 1em;
+    margin: 5px 0;
 }

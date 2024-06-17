@@ -1,8 +1,8 @@
 jQuery(document).ready(function($) {
-    $('#coudar-registration-form').on('submit', function(e) {
-        e.preventDefault();
+    $('#course-registration-form').on('submit', function(event) {
+        event.preventDefault();
 
-        var formData = $(this).serialize() + '&coudar_nonce=' + coudar_ajax.nonce;
+        var formData = $(this).serialize();
 
         $.ajax({
             type: 'POST',
@@ -13,13 +13,13 @@ jQuery(document).ready(function($) {
             },
             success: function(response) {
                 if (response.success) {
-                    alert('Registration successful! Thank you.');
+                    alert('Thank you for your submission!');
                 } else {
-                    alert('There was an error with your registration. Please try again.');
+                    alert('There was an error with your submission. Please try again.');
                 }
             },
             error: function() {
-                alert('There was an error with your registration. Please try again.');
+                alert('There was an error with your submission. Please try again.');
             }
         });
     });
