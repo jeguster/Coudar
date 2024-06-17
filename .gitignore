@@ -1,0 +1,36 @@
+# WordPress Core
+/wp-admin/
+/wp-includes/
+/wp-content/languages/
+/wp-content/upgrade/
+/wp-content/advanced-cache.php
+/wp-content/wp-cache-config.php
+/wp-content/cache/
+/wp-content/backups/
+/wp-content/backup-db/
+/wp-content/uploads/backwpup-*/backups/
+/wp-content/mu-plugins/
+/wp-content/plugins/hello.php
+
+# Logs
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Node modules and dependencies
+node_modules/
+/npm-debug.log
+
+# Local development environment files
+/.vscode/
+/*.local
+
+# Composer
+/vendor/
+/composer.lock
+/composer.phar
+
+# Ignore IDE specific files
+.idea/
