@@ -290,14 +290,24 @@ function coudar_display_course_details($content) {
         $course_price = get_post_meta($post->ID, 'course_price', true);
         $course_content = '';
 
+        // Remove default post elements
+        remove_action('genesis_entry_header', 'genesis_do_post_title');
+        remove_action('genesis_entry_content', 'genesis_do_post_image', 8);
+        remove_action('genesis_entry_footer', 'genesis_post_meta');
+
+        // Add custom title
         $course_content .= '<h1>' . get_the_title() . '</h1>';
+
+        // Add custom content
         $course_content .= '<p>' . get_the_content() . '</p>';
-        if (has_post_thumbnail()) {
-            $course_content .= '<div class="coudar-course-thumbnail">' . get_the_post_thumbnail($post->ID, 'large') . '</div>';
-        }
         $course_content .= '<p><strong>Date:</strong> ' . esc_html($course_date) . '</p>';
         $course_content .= '<p><strong>Time:</strong> ' . esc_html($course_time) . '</p>';
         $course_content .= '<p><strong>Price:</strong> ' . esc_html($course_price) . '</p>';
+        
+        // Add featured image if it exists
+        if (has_post_thumbnail()) {
+            $course_content .= '<div class="coudar-course-thumbnail">' . get_the_post_thumbnail($post->ID, 'large') . '</div>';
+        }
 
         // Add registration form
         $course_content .= '<h2>Register for this Course</h2>';
@@ -320,3 +330,16 @@ function coudar_display_course_details($content) {
     return $content;
 }
 add_filter('the_content', 'coudar_display_course_details');
+
+// Include custom template for single course
+function coudar_include_template($template) {
+    if (is_singular('course')) {
+        // Check if custom template exists in plugin directory
+        $plugin_template = plugin_dir_path(__FILE__) . 'single-course-template.php';
+        if (file_exists($plugin_template)) {
+            return $plugin_template;
+        }
+    }
+    return $template;
+}
+add_filter('template_include', 'coudar_include_template');
