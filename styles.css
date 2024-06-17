@@ -1,27 +1,23 @@
-.coudar-courses {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
+.single-course-content {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
 }
 
-.coudar-course {
-    border: 1px solid #ddd;
-    padding: 15px;
-    width: 30%;
-    box-sizing: border-box;
+.course-thumbnail img {
+    display: block;
+    margin: 0 auto;
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
 }
 
-.coudar-course h2 {
-    font-size: 1.5em;
-    margin-bottom: 10px;
+#course-registration-form {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
 }
 
-.coudar-course p {
-    margin: 5px 0;
-}
-
-.coudar-course-thumbnail {
-    margin-bottom: 10px;
-    max-width: 100%; /* Ensure the image fits within the container */
-    height: auto; /* Maintain aspect ratio */
+.entry-title, .entry-content {
+    text-align: center;
 }
