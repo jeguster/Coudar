@@ -47,6 +47,7 @@ function coudar_register_post_type() {
 }
 add_action('init', 'coudar_register_post_type');
 
+
 // Shortcode to display courses
 function coudar_courses_shortcode() {
     $args = array(
@@ -65,8 +66,7 @@ function coudar_courses_shortcode() {
                 $output .= get_the_post_thumbnail(get_the_ID(), 'medium');
             }
             $output .= '<h3>' . get_the_title() . '</h3>';
-            $output .= '<p>' . get_the_date() . '</p>';
-            $output .= '<p>' . get_the_excerpt() . '</p>';
+            $output .= '<p>' . date('d.m.Y', strtotime(get_post_meta(get_the_ID(), '_course_date', true))) . ' klo ' . date('H.i', strtotime(get_post_meta(get_the_ID(), '_course_time', true))) . '</p>';
             $output .= '<a href="' . get_permalink() . '" class="button">View Course</a>';
             $output .= '</div>';
         }
@@ -79,6 +79,7 @@ function coudar_courses_shortcode() {
     return $output;
 }
 add_shortcode('coudar_courses', 'coudar_courses_shortcode');
+
 
 // Enqueue custom scripts and styles
 function coudar_enqueue_scripts() {
@@ -95,6 +96,7 @@ function coudar_enqueue_styles() {
 }
 
 add_action('wp_enqueue_scripts', 'coudar_enqueue_styles');
+
 
 // Handle AJAX form submission
 function coudar_register_course() {

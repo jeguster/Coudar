@@ -1,3 +1,67 @@
+.course-details {
+    margin: 0 auto;
+    max-width: 800px;
+    text-align: center;
+}
+
+.course-meta {
+    margin-bottom: 20px;
+}
+
+.course-meta p {
+    margin: 5px 0;
+}
+
+.course-content {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.course-image img {
+    display: block;
+    margin: 0 auto;
+    border-radius: 5px;
+    width: 100%;
+    max-width: 100%;
+}
+
+.course-registration-form {
+    margin: 0 auto;
+    max-width: 600px;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.course-registration-form label {
+    font-weight: bold;
+}
+
+.course-registration-form input,
+.course-registration-form textarea {
+    width: 100%;
+    padding: 5px;
+    margin: 2px 0;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+.course-registration-form button {
+    width: auto;
+    padding: 10px 20px;
+    background-color: #0073aa;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    align-self: center;
+}
+
+.course-registration-form button:hover {
+    background-color: #005177;
+}
+
 .course-thumbnails {
     display: flex;
     flex-wrap: wrap;

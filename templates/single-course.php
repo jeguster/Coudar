@@ -4,20 +4,20 @@
     <?php while ( have_posts() ) : the_post(); ?>
         <h1><?php the_title(); ?></h1>
         <div class="course-meta">
-            <p><?php echo get_post_meta(get_the_ID(), '_course_date', true); ?></p>
-            <p><?php echo get_post_meta(get_the_ID(), '_course_time', true); ?></p>
-            <p><?php echo get_post_meta(get_the_ID(), '_course_price', true); ?></p>
+            <p><?php echo date('d.m.Y', strtotime(get_post_meta(get_the_ID(), '_course_date', true))) . ' klo ' . date('H.i', strtotime(get_post_meta(get_the_ID(), '_course_time', true))); ?></p>
         </div>
+        <?php if ( has_post_thumbnail() ) : ?>
+            <div class="course-image">
+                <?php the_post_thumbnail('large'); ?>
+            </div>
+        <?php endif; ?>
         <div class="course-content">
             <?php the_content(); ?>
         </div>
-        <?php if ( has_post_thumbnail() ) {
-            the_post_thumbnail('medium');
-        } ?>
     <?php endwhile; ?>
 </div>
 
-<form id="course-registration-form">
+<form id="course-registration-form" class="course-registration-form">
     <label for="participant_name">Name:</label>
     <input type="text" id="participant_name" name="participant_name" required><br>
     <label for="participant_email">Email:</label>
